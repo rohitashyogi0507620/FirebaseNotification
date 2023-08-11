@@ -1,6 +1,7 @@
 package com.example.firebasenotification.notification
 
 import android.Manifest
+import android.app.Activity
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Intent
@@ -13,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.firebasenotification.CarActivity
 import com.example.firebasenotification.MainActivity
+import com.example.firebasenotification.MenuClick
 import com.example.firebasenotification.ProductActivity
 import com.example.firebasenotification.R
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -28,6 +30,8 @@ class MessagingService : FirebaseMessagingService() {
 
     var TAG = "NOTIFICATION"
     var bitmap: Bitmap? = null
+    lateinit var menuClick: MenuClick
+
 
     override fun onNewToken(s: String) {
         super.onNewToken(s)
@@ -35,6 +39,8 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
+
+        menuClick = MenuClick(applicationContext, null, applicationContext as Activity)
 
         if (remoteMessage != null && remoteMessage.data != null) {
 
@@ -49,18 +55,37 @@ class MessagingService : FirebaseMessagingService() {
                 object : TypeToken<NotificationResponse>() {}.type
             )
             if (notificationResponse != null) {
-                showNotification(notificationResponse)
+                handleNotification(notificationResponse)
             }
         }
 
     }
 
-    private fun showNotification(notification: NotificationResponse) {
+    private fun handleNotification(notification: NotificationResponse) {
+        var userrolename="Posp"
+
+        if (!notification.role.isNullOrEmpty()){
+            if (notification.role.equals(userrolename)){
+                showNotification(notification)
+            }
+        }else{
+            showNotification(notification)
+        }
+
+
+
+    }
+
+    fun showNotification(notification: NotificationResponse){
+
         var intent: Intent? = null
 
-        if (notification.productCode.equals("MTRPC")) {
+        if (!notification.productCode.isNullOrEmpty()){
+
+        }
+        if (notification.productCode.equals("1")) {
             intent = Intent(this, CarActivity::class.java)
-        } else if (notification.productCode.equals("MTRTW")) {
+        } else if (notification.productCode.equals(" ")) {
             intent = Intent(this, ProductActivity::class.java)
         } else {
             intent = Intent(this, MainActivity::class.java)
@@ -69,6 +94,7 @@ class MessagingService : FirebaseMessagingService() {
             this!!.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("PRODUCT",notification.extraData)
         }
+
         val pendingIntent: PendingIntent =
             PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         val builder = NotificationCompat.Builder(this, getString(R.string.CHANNEL_ID))
@@ -92,7 +118,6 @@ class MessagingService : FirebaseMessagingService() {
                 notify(notificationId, builder.build())
             }
         }
-
     }
 
 

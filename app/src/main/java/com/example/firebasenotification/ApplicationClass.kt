@@ -24,27 +24,6 @@ class ApplicationClass : Application() {
     override fun onCreate() {
         super.onCreate()
         FirebaseApp.initializeApp(applicationContext)
-
-        try {
-            USELIST.forEach {
-                if (it.equals(USERROLE)) {
-                    Firebase.messaging.subscribeToTopic(USERROLE)
-                        .addOnCompleteListener { task ->
-                            var msg = "Subscribed "
-                            if (!task.isSuccessful) {
-                                msg = "Subscribe failed"
-                            }
-                            Log.d(TAG, USERROLE+msg)
-                        }
-                } else {
-                    Firebase.messaging.unsubscribeFromTopic(it)
-                }
-
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-
         FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
             if (task.isSuccessful) {
                 val token = task.result

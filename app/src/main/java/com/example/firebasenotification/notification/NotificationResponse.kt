@@ -10,4 +10,5 @@ data class NotificationResponse(
     val click_action: String,
     val menuCode: String,
     val extraData: String,
+    val role: String
 )
