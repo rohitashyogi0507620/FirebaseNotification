@@ -1,6 +1,7 @@
 package com.example.firebasenotification.notification
 
 import android.Manifest
+import android.app.Notification
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -40,58 +41,44 @@ class MessagingService : FirebaseMessagingService() {
             Log.d("Notification", remoteMessage.data.toString())
 
 
-            var logInResponse: NotificationResponse = Gson().fromJson(
-                remoteMessage.data.toString(),
+            val params:Map<String,String> = remoteMessage.data
+            val jsonObject = JSONObject(params)
+
+            var notificationResponse: NotificationResponse = Gson().fromJson(
+                jsonObject.toString(),
                 object : TypeToken<NotificationResponse>() {}.type
             )
-
-            val title = logInResponse.title
-            val message = logInResponse.body
-            val image = logInResponse.imageUrl
-            val data = logInResponse.response
-
-            Log.d("Notification", "Title ${title} Message ${message} Image ${image} Data ${data}")
-            if (image != null) {
-                bitmap = getBitmapfromUrl(image.toString())
-                showNotification(title, message, bitmap, true, data)
-            } else {
-                showNotification(title, message, bitmap, false, data)
+            if (notificationResponse != null) {
+                showNotification(notificationResponse)
             }
         }
 
     }
 
-    private fun showNotification(
-        title: String?,
-        message: String?,
-        bitmap: Bitmap?,
-        isImage: Boolean,
-        data: Response
-    ) {
+    private fun showNotification(notification: NotificationResponse) {
         var intent: Intent? = null
 
-
-        if (data.PRODUCTCODE.equals("MTRPC")) {
+        if (notification.productCode.equals("MTRPC")) {
             intent = Intent(this, CarActivity::class.java)
-        } else if (data.PRODUCTCODE.equals("MTRTW")) {
+        } else if (notification.productCode.equals("MTRTW")) {
             intent = Intent(this, ProductActivity::class.java)
         } else {
             intent = Intent(this, MainActivity::class.java)
-
         }
         intent.apply {
             this!!.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("PRODUCT", data.STEP)
+            putExtra("PRODUCT",notification.extraData)
         }
         val pendingIntent: PendingIntent =
             PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         val builder = NotificationCompat.Builder(this, getString(R.string.CHANNEL_ID))
-            .setSmallIcon(R.drawable.ic_notification).setContentTitle(title).setContentText(message)
+            .setSmallIcon(R.drawable.ic_notification).setContentTitle(notification.title).setContentText(notification.body)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setVibrate(longArrayOf(100, 300, 300, 300, 300)).setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
-        if (isImage) {
+        if (notification.imageUrl.isEmpty()) {
+            bitmap=getBitmapfromUrl(notification.imageUrl)
             builder.setLargeIcon(bitmap)
             builder.setStyle(NotificationCompat.BigPictureStyle().bigPicture(bitmap))
         }
